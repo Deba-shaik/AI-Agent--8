@@ -1,0 +1,179 @@
+{
+  "name": "Topic_8_Multi_Agent_Research_Editor",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -352,
+        -80
+      ],
+      "id": "19c15a24-d174-44e2-88c4-80187f7703ed",
+      "name": "When chat message received",
+      "webhookId": "111727db-7baa-41d7-a96b-06fb63dc3ce6"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "\nYou are a researcher assistant.\n\nYour sole job is to gather raw, factual data using\nthe database_search_tool based on the user's request.\n\nRULES:\n1. Extract the requested record ID.\n2. Call database_search_tool using that record ID.\n3. Return ONLY the factual data retrieved by the tool.\n4. Do not write greetings or summaries.\n5. Do not invent information.\n6. If the record is not found, report that no record was found.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -128,
+        -80
+      ],
+      "id": "823b62d3-98db-45a5-8103-1a80e0084da0",
+      "name": "Researcher_Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\n\n{{ `Please write a newsletter update based on this information:\n\nCustomer's original request:\n${$('When chat message received').first().json.chatInput}\n\nRaw database findings gathered by the Researcher:\n${$json.output}` }}\n",
+        "options": {
+          "systemMessage": "\nYou are a professional editor and copywriter.\n\nYour job is to take raw research data and write\na polished, friendly, and structured newsletter\nupdate for the customer.\n\nRULES:\n1. Rely ONLY on the provided raw research data.\n2. Do not invent facts.\n3. Do not mention tools or the research process.\n4. Write directly and politely to the customer.\n5. Use a clear heading and readable paragraphs.\n6. Keep the newsletter professional and concise.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        240,
+        -80
+      ],
+      "id": "13001b4c-8358-4f8a-835d-a8ec2d36ea56",
+      "name": "Editor_Agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        160
+      ],
+      "id": "0ce082c2-a993-437a-b474-18719a396fc6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aP3PJ2xm5m16yfiJ",
+          "name": "Google Gemini(PaLM) Api account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Search the database for a record using its numeric ID.",
+        "url": "=\nhttps://jsonplaceholder.typicode.com/posts/{{ $fromAI('record_id', 'Numeric database record ID', 'number') }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        32,
+        192
+      ],
+      "id": "f4f6ff77-2511-47ba-8d59-a6d892695862",
+      "name": "database_search_tool"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "d6920579-cb95-4fa4-bdfb-165d51ec918e",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aP3PJ2xm5m16yfiJ",
+          "name": "Google Gemini(PaLM) Api account 7"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Researcher_Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Researcher_Agent": {
+      "main": [
+        [
+          {
+            "node": "Editor_Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Researcher_Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "database_search_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Researcher_Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Editor_Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "96202348-bb70-489e-b907-3fc33787e2cf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a03c7678428ef19ededbf912f16f7d5798ec7b9ab4c17f2a2def6a9e791e7215"
+  },
+  "nodeGroups": [],
+  "id": "xtheaLLrRFoufQwE",
+  "tags": []
+}
